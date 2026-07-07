@@ -274,28 +274,41 @@ members.forEach(m => {
   grid.appendChild(c);
 });
 
-// Play video and audio on DOMContentLoaded
-window.addEventListener('DOMContentLoaded', () => {
+// Function to play video and audio safely
+function playMedia() {
   const vid = document.getElementById('bgVideo');
-  vid.muted = true;
-  vid.play().catch(() => {
-    vid.play();
-  });
-  
   const aud = document.getElementById('bgAudio');
-  aud.volume = 0.8;
-  aud.play().catch(() => {
-    document.addEventListener('click', () => {
-      aud.play();
-    }, { once: true });
-  });
-});
+  
+  if (vid) {
+    vid.muted = true;
+    vid.play().catch(() => {
+      // Ignore initial block, will try again on transition or click
+    });
+  }
+  
+  if (aud) {
+    aud.volume = 0.8;
+    aud.play().catch(() => {
+      // Play on first user click if blocked by browser policy
+      document.addEventListener('click', () => {
+        if (aud) aud.play().catch(() => {});
+        if (vid) vid.play().catch(() => {});
+      }, { once: true });
+    });
+  }
+}
+
+// Start playing on DOMContentLoaded
+window.addEventListener('DOMContentLoaded', playMedia);
 
 // Auto transition 3s
 setTimeout(() => {
   document.getElementById('page1').classList.add('hidden');
   const p2 = document.getElementById('page2');
   p2.classList.remove('hidden');
+  
+  // Re-trigger play once transition happens to ensure playback starts
+  playMedia();
 }, 3000);
 </script>
 </body>
